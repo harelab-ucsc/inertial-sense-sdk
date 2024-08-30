@@ -19,7 +19,7 @@
 #ifndef INERTIAL_SENSE_IMX_RTKROVER_H
 #define INERTIAL_SENSE_IMX_RTKROVER_H
 
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 
 #include "ParamHelper.h"
 
@@ -27,7 +27,7 @@ class RtkRoverCorrectionProvider {
 protected:
     ParamHelper ph_;
     InertialSense* is_;
-    ros::NodeHandle* nh_;
+    rclcpp::Node* nh_;
 
 public:
     std::string type_;
@@ -56,7 +56,7 @@ public:
     int data_transmission_interruption_limit_ = 5;
     bool connectivity_watchdog_enabled_ = true;
     float connectivity_watchdog_timer_frequency_ = 1;
-    ros::Timer connectivity_watchdog_timer_;
+    rclcpp::Timer connectivity_watchdog_timer_;
 
     RtkRoverCorrectionProvider_Ntrip(YAML::Node& node) : RtkRoverCorrectionProvider(node, "ntrip") { configure(node); }
     void configure(YAML::Node& node);
@@ -64,7 +64,7 @@ public:
     void connect_rtk_client();
     void start_connectivity_watchdog_timer();
     void stop_connectivity_watchdog_timer();
-    void connectivity_watchdog_timer_callback(const ros::TimerEvent &timer_event);
+    void connectivity_watchdog_timer_callback(const rclcpp::TimerEvent &timer_event);
 
 };
 
@@ -95,7 +95,7 @@ class RtkRoverProvider {
 protected:
     ParamHelper ph_;
     InertialSense* is_;
-    ros::NodeHandle* nh_;
+    rclcpp::Node* nh_;
 
 public:
     bool enable = true;                 // Enables/Disables the entire provider - enabled until explicitly disabled
@@ -118,7 +118,7 @@ public:
             else if (type == "evb") return new RtkRoverCorrectionProvider_EVB(node);
             else if (type == "ros_topic") return new RtkRoverCorrectionProvider_ROS(node);
         } else {
-            ROS_ERROR("Unable to configure RosRoverCorrectionProvider. The YAML node was null or undefined.");
+            RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RosRoverCorrectionProvider. The YAML node was null or undefined.");
         }
         return nullptr;
     }

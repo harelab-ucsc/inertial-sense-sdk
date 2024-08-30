@@ -44,7 +44,7 @@ void connect_rtk_client(const std::string& rtk_correction_protocol, const std::s
       {
         int sleep_duration = RTK_connection_attempt_count * rtk_connection_attempt_backoff;
         ROS_WARN_STREAM("Retrying connection in " << sleep_duration << " seconds");
-        ros::Duration(sleep_duration).sleep();
+        rclcpp::Duration(sleep_duration).sleep();
       }
     }
   }

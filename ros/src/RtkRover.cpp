@@ -39,7 +39,7 @@ void RtkRoverProvider::configure(YAML::Node& node) {
             ROS_ERROR_STREAM("No \"correction_input\" configuration has been provided.  Please validate the configuration:\n\n" << node << "\n\n");
         }
     } else {
-        ROS_ERROR("Unable to configure RosRoverProvider. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RosRoverProvider. The YAML node was null or undefined.");
     }
 }
 
@@ -63,7 +63,7 @@ void RtkRoverCorrectionProvider_Ntrip::configure(YAML::Node& node) {
         ph_.nodeParam("enable", connectivity_watchdog_enabled_, true);
         ph_.nodeParam("interval", connectivity_watchdog_timer_frequency_, 1);
     } else {
-        ROS_ERROR("Unable to configure RtkRoverCorrectionProvider_Ntrip. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkRoverCorrectionProvider_Ntrip. The YAML node was null or undefined.");
     }
 }
 
@@ -117,7 +117,7 @@ void RtkRoverCorrectionProvider_Ntrip::connect_rtk_client()
             {
                 int sleep_duration = RTK_connection_attempt_count * connection_attempt_backoff_;
                 ROS_WARN_STREAM("Retrying connection in " << sleep_duration << " seconds");
-                ros::Duration(sleep_duration).sleep();
+                rclcpp::Duration(sleep_duration).sleep();
             }
         }
     }
@@ -125,7 +125,7 @@ void RtkRoverCorrectionProvider_Ntrip::connect_rtk_client()
     connecting_ = false;
 }
 
-void RtkRoverCorrectionProvider_Ntrip::connectivity_watchdog_timer_callback(const ros::TimerEvent &timer_event)
+void RtkRoverCorrectionProvider_Ntrip::connectivity_watchdog_timer_callback(const rclcpp::TimerEvent &timer_event)
 {
     if (connecting_ && (is_ != nullptr))
         return;
@@ -137,7 +137,7 @@ void RtkRoverCorrectionProvider_Ntrip::connectivity_watchdog_timer_callback(cons
 
         if (data_transmission_interruption_count_ >= data_transmission_interruption_limit_)
         {
-            ROS_WARN("RTK transmission interruption, reconnecting...");
+            RCLCPP_WARN(rclcpp::get_logger("InertialSenseRos"), "RTK transmission interruption, reconnecting...");
             connect_rtk_client();
         }
     }
@@ -155,7 +155,7 @@ void RtkRoverCorrectionProvider_Ntrip::start_connectivity_watchdog_timer()
     }
 
     if (!connectivity_watchdog_timer_.isValid()) {
-        connectivity_watchdog_timer_ = nh_->createTimer(ros::Duration(connectivity_watchdog_timer_frequency_), &RtkRoverCorrectionProvider_Ntrip::connectivity_watchdog_timer_callback, this);
+        connectivity_watchdog_timer_ = nh_->createTimer(rclcpp::Duration(connectivity_watchdog_timer_frequency_), &RtkRoverCorrectionProvider_Ntrip::connectivity_watchdog_timer_callback, this);
     }
 
     connectivity_watchdog_timer_.start();
@@ -178,7 +178,7 @@ void RtkRoverCorrectionProvider_Serial::configure(YAML::Node& node) {
         ph_.nodeParam("port", port_);
         ph_.nodeParam("baud_rate", baud_rate_);
     } else {
-        ROS_ERROR("Unable to configure RtkRoverCorrectionProvider_Serial. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkRoverCorrectionProvider_Serial. The YAML node was null or undefined.");
     }
 }
 
@@ -191,7 +191,7 @@ void RtkRoverCorrectionProvider_ROS::configure(YAML::Node& node) {
         ph_.nodeParam("format", protocol_, "RTCM3");
         ph_.nodeParam("topic", topic_);
     } else {
-        ROS_ERROR("Unable to configure RtkRoverCorrectionProvider_ROS. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkRoverCorrectionProvider_ROS. The YAML node was null or undefined.");
     }
 }
 
@@ -204,7 +204,7 @@ void RtkRoverCorrectionProvider_EVB::configure(YAML::Node& node) {
         ph_.nodeParam("format", protocol_, "RTCM3");
         ph_.nodeParam("port", port_);
     } else {
-        ROS_ERROR("Unable to configure RtkRoverCorrectionProvider_EVB. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkRoverCorrectionProvider_EVB. The YAML node was null or undefined.");
     }
 }
 

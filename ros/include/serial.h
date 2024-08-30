@@ -39,7 +39,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
-#include <boost/function.hpp>
+#include <functional>
 
 #include <list>
 #include <string>

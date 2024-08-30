@@ -20,7 +20,7 @@
 #define INERTIAL_SENSE_IMX_TOPICHELPER_H
 
 #include "InertialSense.h"
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 
 
 
@@ -37,7 +37,7 @@ public:
         if (!stream)
         {
             stream = true;
-            ROS_DEBUG("%s response received", cISDataMappings::GetDataSetName(did));
+            RCLCPP_DEBUG(rclcpp::get_logger("InertialSenseRos"), "%s response received", cISDataMappings::GetDataSetName(did));
         }
     }
 
@@ -75,8 +75,8 @@ public:
     ros::Publisher pubObs;
     ros::Publisher pubEph;
     ros::Publisher pubGEp;
-    ros::Timer obs_bundle_timer;
-    ros::Time last_obs_time;
+    rclcpp::Timer obs_bundle_timer;
+    rclcpp::Time last_obs_time;
 };
 
 

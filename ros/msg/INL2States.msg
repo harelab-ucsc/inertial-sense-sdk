@@ -1,9 +1,1 @@
-Header header                       # GPS time of week (since Sunday morning) in seconds
-geometry_msgs/Quaternion quatEcef   # Quaternion body rotation with respect to ECEF
-geometry_msgs/Vector3 velEcef       # (m/s) Velocity in ECEF frame
-geometry_msgs/Vector3 posEcef       # (m) Position in ECEF frame
-geometry_msgs/Vector3 gyroBias      # (rad/s) Gyro bias
-geometry_msgs/Vector3 accelBias     # (m/s^2) Accelerometer bias
-float32 baroBias                    # (m) Barometer bias
-float32 magDec                      # (rad) Magnetic declination
-float32 magInc                      # (rad) Magnetic inclination
+std_msgs/Header header# GPS time of week (since Sunday morning) in secondsgeometry_msgs/Quaternion quatEcef# Quaternion body rotation with respect to ECEFgeometry_msgs/Vector3 velEcef# (m/s) Velocity in ECEF framegeometry_msgs/Vector3 posEcef# (m) Position in ECEF framegeometry_msgs/Vector3 gyroBias# (rad/s) Gyro biasgeometry_msgs/Vector3 accelBias# (m/s^2) Accelerometer biasfloat32 baroBias# (m) Barometer biasfloat32 magDec# (rad) Magnetic declinationfloat32 magInc# (rad) Magnetic inclination

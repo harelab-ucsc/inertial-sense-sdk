@@ -144,7 +144,7 @@ TEST(test_main, gps_ins_time_sync)
 
 void cTestNode::init()
 {
-    ros::NodeHandle nh;
+    rclcpp::Node nh;
     sub_wheel_encoder_      = nh.subscribe("msg_wheel_encoder", 1, &cTestNode::cbWheelEncoder, this);
     sub_pimu_               = nh.subscribe("pimu", 1, &cTestNode::cbPIMU, this);
     sub_imu_                = nh.subscribe("imu", 1, &cTestNode::cbIMU, this);
@@ -155,16 +155,16 @@ void cTestNode::init()
 bool cTestNode::step()
 {
     // static double last_time = 0;
-    // if( ros::ok() )
+    // if( rclcpp::ok() )
     // {
-    //     double current_time = ros::Time::now().toSec();
+    //     double current_time = rclcpp::Time::now().toSec();
     //     double dt = current_time - last_time;
     //     last_time = current_time;
-    //     ros::spinOnce();
-    //     current_time = ros::Time::now().toSec();
-    //     ros::Rate rate(50);     // 50 ms
+    //     rclcpp::spin_some(node);
+    //     current_time = rclcpp::Time::now().toSec();
+    //     rclcpp::Rate rate(50);     // 50 ms
     //     rate.sleep();
-    //     dt = ros::Time::now().toSec() - current_time;
+    //     dt = rclcpp::Time::now().toSec() - current_time;
 
     //     return true;
     // }
@@ -172,13 +172,13 @@ bool cTestNode::step()
     return false;
 }
 
-void cTestNode::cbWheelEncoder(const sensor_msgs::JointState &msg)
+void cTestNode::cbWheelEncoder(const sensor_msgs::msg::JointState &msg)
 {
     if (!quiet)
         TEST_COUT << "Rx wheel encoder : " << std::fixed << std::setw(11) << std::setprecision(6) << msg.header.stamp.toSec() << std::endl;
 }
 
-void cTestNode::cbPIMU(const inertial_sense_ros::PIMU &pimu)
+void cTestNode::cbPIMU(const inertial_sense_ros::msg::PIMU &pimu)
 {
     if (!quiet)
         TEST_COUT << "Rx PIMU : " << std::fixed << std::setw(11) << std::setprecision(6) << pimu.header.stamp.toSec() << std::endl;
@@ -187,7 +187,7 @@ void cTestNode::cbPIMU(const inertial_sense_ros::PIMU &pimu)
     testNode.did_rx_pimu_ = true;
 }
 
-void cTestNode::cbIMU(const  sensor_msgs::Imu &imu)
+void cTestNode::cbIMU(const  sensor_msgs::msg::Imu &imu)
 {
     if (!quiet)
         TEST_COUT << "Rx IMU : " << std::fixed << std::setw(11) << std::setprecision(6) << imu.header.stamp.toSec() << std::endl;
@@ -195,7 +195,7 @@ void cTestNode::cbIMU(const  sensor_msgs::Imu &imu)
         imu_ts.push_back(imu.header.stamp.toSec());
 }
 
-void cTestNode::cbINS(const nav_msgs::Odometry &ins)
+void cTestNode::cbINS(const nav_msgs::msg::Odometry &ins)
 {
     if (!quiet)
         TEST_COUT << "Rx INS : " << std::fixed << std::setw(11) << std::setprecision(6) << ins.header.stamp.toSec() << std::endl;
@@ -203,7 +203,7 @@ void cTestNode::cbINS(const nav_msgs::Odometry &ins)
         ins_ts.push_back(ins.header.stamp.toSec());
 }
 
-void cTestNode::cbGPS(const inertial_sense_ros::GPS &gps)
+void cTestNode::cbGPS(const inertial_sense_ros::msg::GPS &gps)
 {
     if (!quiet)
         TEST_COUT << "Rx GPS : " << std::fixed << std::setw(11) << std::setprecision(6) << gps.header.stamp.toSec() << std::endl;
@@ -268,7 +268,8 @@ double cTestNode::get_max_deviation(std::vector<double> &a, std::vector<double> 
 int main(int argc, char** argv) 
 {
     ::testing::InitGoogleTest(&argc, argv);
-    ros::init(argc, argv, "test_inertial_sense_ros");
+    rclcpp::init(argc, argv);
+    auto node = rclcpp::Node::make_shared("test_inertial_sense_ros");
 
     ros::AsyncSpinner spinner(1);
     spinner.start();

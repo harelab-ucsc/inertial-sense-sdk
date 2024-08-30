@@ -332,7 +332,7 @@ int main(int argc, char** argv) {
     // FIXME: Ideally, we shouldn't need to startup ROS to perform basic unit tests, but the InertialSenseROS constructor requires ROS to be running.
     // We should move this to an initROS() function which can be called from a parameterized constructor, and implement a default constructor that
     // initializes class fields/members, but doesn't do anything else.
-    ros::init(argc, argv, "test_unit_tests");
-    ros::NodeHandle nh;
+    rclcpp::init(argc, argv);
+    auto nh = rclcpp::Node::make_shared("test_unit_tests");
     return RUN_ALL_TESTS();
 }

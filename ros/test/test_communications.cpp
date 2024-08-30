@@ -13,13 +13,13 @@ private:
 public:
     gpsTestNode() {}
     void init() {
-        ros::NodeHandle nh;
+        rclcpp::Node nh;
         sub_navsatfix = nh.subscribe("/NavSatFix", 1, &gpsTestNode::cb_navsatfix, this);
     }
 
     bool navsatfix_passed = false;
-    sensor_msgs::NavSatFix msg_NavSatFix;
-    void cb_navsatfix(const sensor_msgs::NavSatFixConstPtr& fix) {
+    sensor_msgs::msg::NavSatFix msg_NavSatFix;
+    void cb_navsatfix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr& fix) {
         msg_NavSatFix = *fix;
         navsatfix_passed = true;
         TEST_COUT << "Rx NavSatFix\n";
@@ -61,11 +61,11 @@ TEST(ROSCommunicationsTests, test_navsatfix )
     InertialSenseROS isROS(config);
     isROS.initialize();
 
-    double now = ros::Time::now().toSec();
+    double now = rclcpp::Time::now().toSec();
     double expires = now + 5.0, nextMsg = now + 1.0;
     do {
         isROS.update();
-        ros::spinOnce();
+        rclcpp::spin_some(node);
         SLEEP_MS(100);
 
         if (now > nextMsg) {
@@ -73,7 +73,7 @@ TEST(ROSCommunicationsTests, test_navsatfix )
             nextMsg = now + 1.0;
         }
 
-        now = ros::Time::now().toSec();
+        now = rclcpp::Time::now().toSec();
     } while(!testNode.navsatfix_passed && (now < expires));
 
     EXPECT_TRUE(testNode.navsatfix_passed);

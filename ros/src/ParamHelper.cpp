@@ -83,7 +83,7 @@ YAML::Node xmlRpcToYamlNode(XmlRpc::XmlRpcValue &v)
 
 bool ParamHelper::paramServerToYamlNode(YAML::Node &node, std::string nhKey, std::string indentStr)
 {
-    ros::NodeHandle nh;
+    rclcpp::Node nh;
 
     std::vector <std::string> nhKeyList;
     nh.getParamNames(nhKeyList);

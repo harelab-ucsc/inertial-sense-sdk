@@ -1,4 +1,2 @@
-
-Header header
-uint32 num_sats            		# number of sattelites in the sky
-SatInfo[50] sattelite_info	 	# information about sattelites
+std_msgs/Header header
+uint32 num_sats# number of sattelites in the skySatInfo[] sattelite_info# information about sattelites

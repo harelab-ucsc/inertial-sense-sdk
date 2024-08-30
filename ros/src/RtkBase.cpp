@@ -66,7 +66,7 @@ void RtkBaseProvider::configure(YAML::Node& node) {
             ROS_ERROR_STREAM("No \"correction_outputs\" configuration has been provided.  Please validate the configuration:\n\n" << node << "\n\n");
         }
     } else {
-        ROS_ERROR("Unable to configure RosBaseProvider. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RosBaseProvider. The YAML node was null or undefined.");
     }
 }
 
@@ -93,7 +93,7 @@ void RtkBaseCorrectionProvider_Ntrip::configure(YAML::Node& node) {
         ph_.nodeParam("password", password_);
         ph_.nodeParam("credentials", credentials_);
     } else {
-        ROS_ERROR("Unable to configure RtkBaseCorrectionProvider_Ntrip. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkBaseCorrectionProvider_Ntrip. The YAML node was null or undefined.");
     }
 }
 
@@ -111,7 +111,7 @@ void RtkBaseCorrectionProvider_Serial::configure(YAML::Node& node) {
         ph_.nodeParam("port", port_);
         ph_.nodeParam("baud_rate", baud_rate_);
     } else {
-        ROS_ERROR("Unable to configure RtkBaseCorrectionProvider_Serial. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkBaseCorrectionProvider_Serial. The YAML node was null or undefined.");
     }
 }
 
@@ -123,7 +123,7 @@ void RtkBaseCorrectionProvider_ROS::configure(YAML::Node& node) {
         ph_.setCurrentNode(node);
         ph_.nodeParam("topic", topic_);
     } else {
-        ROS_ERROR("Unable to configure RtkBaseCorrectionProvider_ROS. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkBaseCorrectionProvider_ROS. The YAML node was null or undefined.");
     }
 }
 
@@ -135,7 +135,7 @@ void RtkBaseCorrectionProvider_EVB::configure(YAML::Node& node) {
         ph_.setCurrentNode(node);
         ph_.nodeParam("port", port_);
     } else {
-        ROS_ERROR("Unable to configure RtkBaseCorrectionProvider_EVB. The YAML node was null or undefined.");
+        RCLCPP_ERROR(rclcpp::get_logger("InertialSenseRos"), "Unable to configure RtkBaseCorrectionProvider_EVB. The YAML node was null or undefined.");
     }
 }
 

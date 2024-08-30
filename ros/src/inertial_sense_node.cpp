@@ -21,7 +21,8 @@
 int main(int argc, char**argv)
 {
     InertialSenseROS* thing;
-    ros::init(argc, argv, "inertial_sense_node");
+    rclcpp::init(argc, argv);
+    auto node = rclcpp::Node::make_shared("inertial_sense_node");
     if (argc > 1)
     {
         std::string paramYamlPath = argv[1];
@@ -45,9 +46,9 @@ int main(int argc, char**argv)
     }
 
     thing->initialize();
-    while (ros::ok())
+    while (rclcpp::ok())
     {
-        ros::spinOnce();
+        rclcpp::spin_some(node);
         thing->update();
     }
     return 0;
