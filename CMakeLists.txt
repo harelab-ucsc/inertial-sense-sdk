@@ -45,9 +45,7 @@ list(FILTER SOURCES_SDK EXCLUDE REGEX "ISBootloaderSTM32.*")
 list(APPEND SOURCES_SDK ${SOURCES_LIB_USB})
 
 # find_package(udev)
-find_library(UDEV_LIB udev)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+find_library( UDEV_LIB udev )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES_SDK})
 
@@ -61,7 +59,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 	src/yaml-cpp
 	tests/runtime
 	external
-	${LIBUSB_INCLUDE_DIRS}
 )
 
 # Build using C11 and CXX20
@@ -95,5 +92,5 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 	
 	# Link in Linux specific packages
-	target_link_libraries(${PROJECT_NAME} udev m ${LIBUSB_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} udev m)
 endif()

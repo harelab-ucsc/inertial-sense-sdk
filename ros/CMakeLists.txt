@@ -22,28 +22,28 @@ rosidl_generate_interfaces(
     ${PROJECT_NAME}
         srv/refLLAUpdate.srv
         srv/FirmwareUpdate.srv
-        msg/GNSSObsVec.msg
-        msg/PIMU.msg
-        msg/DID_INS2.msg
-        msg/INL2States.msg
-        msg/GNSSEphemeris.msg
-        msg/DID_INS1.msg
-        msg/GNSSObservation.msg
-        msg/SatInfo.msg
-        msg/DID_INS4.msg
+        msg/GPS.msg
         msg/RTKInfo.msg
         msg/GTime.msg
-        msg/GPSInfo.msg
         msg/GlonassEphemeris.msg
-        msg/GPS.msg
+        msg/PIMU.msg
+        msg/GNSSObsVec.msg
         msg/RTKRel.msg
+        msg/DID_INS4.msg
+        msg/INL2States.msg
+        msg/DID_INS2.msg
+        msg/DID_INS1.msg
+        msg/GPSInfo.msg
+        msg/GNSSEphemeris.msg
+        msg/GNSSObservation.msg
+        msg/SatInfo.msg
     DEPENDENCIES
-        geometry_msgs
         std_msgs
+        geometry_msgs
 )
 
-include_directories(include  ${YAML_CPP_INCLUDE_DIR}  ../src  #This line of CMakeList.txt stays in .external file to reference submodule
-  ../src/libusb/libusb  ../src/libusb/linux  ../src/yaml-cpp
+include_directories(include ${YAML_CPP_INCLUDE_DIR} ../src #This line of CMakeList.txt stays in .external file to reference submodule
+ ../src/libusb/libusb ../src/libusb/linux ../src/yaml-cpp
 )
 
 add_library(inertial_sense_ros
@@ -54,10 +54,10 @@ add_library(inertial_sense_ros
 )
 target_include_directories(inertial_sense_ros PUBLIC include)
 
-ament_target_dependencies(inertial_sense_ros InertialSenseSDK ${YAML_CPP_LIBRARIES} pthread "tf2" "std_srvs" "std_msgs" "sensor_msgs" "nav_msgs" "tf2_ros" "geometry_msgs" "diagnostic_msgs")
+ament_target_dependencies(inertial_sense_ros InertialSenseSDK ${YAML_CPP_LIBRARIES} pthread "tf2_ros" "geometry_msgs" "std_msgs" "sensor_msgs" "tf2" "std_srvs" "diagnostic_msgs" "nav_msgs")
 
 add_executable(inertial_sense_node src/inertial_sense_node.cpp)
-ament_target_dependencies(inertial_sense_node inertial_sense_ros "tf2" "std_srvs" "std_msgs" "sensor_msgs" "nav_msgs" "tf2_ros" "geometry_msgs" "diagnostic_msgs")
+ament_target_dependencies(inertial_sense_node inertial_sense_ros "tf2_ros" "geometry_msgs" "std_msgs" "sensor_msgs" "tf2" "std_srvs" "diagnostic_msgs" "nav_msgs")
 ament_target_dependencies(test_unit_tests ${PROJECT_NAME})
 ament_target_dependencies(test_ros_bridge ${PROJECT_NAME})
 ament_export_include_directories(include)
