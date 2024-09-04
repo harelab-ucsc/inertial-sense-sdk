@@ -1,96 +1,67 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.5)
+project(inertial_sense_ros)
 
-project(InertialSenseSDK)
+find_package(yaml-cpp REQUIRED)
 
-file(GLOB SOURCES_SDK
-	"src/*.c"
-	"src/*.cpp"
-	"src/*.h"
-    "src/protocol/*.cpp"
-    "src/protocol/*.h"
-    "src/util/*.cpp"
-    "src/util/*.h"
-	"hw-libs/bootloader/bootloaderShared.c"
-    "tests/runtime/*.cpp"
-    "tests/runtime/*.h"
-	"src/yaml-cpp/*.cpp"
-	"src/yaml-cpp/*.h"
-	"src/yaml-cpp/contrib/*.cpp"
-	"src/yaml-cpp/contrib/*.h"
-	"src/yaml-cpp/node/*.cpp"
-	"src/yaml-cpp/node/*.h"
+find_package(Threads)
+find_package(rosidl_default_generators REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+set(CMAKE_CXX_STANDARD 1 4)
+
+rosidl_generate_interfaces(
+    ${PROJECT_NAME}
+        srv/refLLAUpdate.srv
+        srv/FirmwareUpdate.srv
+        msg/GPS.msg
+        msg/PreIntIMU.msg
+        msg/RTKInfo.msg
+        msg/GTime.msg
+        msg/GlonassEphemeris.msg
+        msg/GNSSObsVec.msg
+        msg/RTKRel.msg
+        msg/DID_INS4.msg
+        msg/INL2States.msg
+        msg/DID_INS2.msg
+        msg/DID_INS1.msg
+        msg/GPSInfo.msg
+        msg/GNSSEphemeris.msg
+        msg/GNSSObservation.msg
+        msg/SatInfo.msg
+    DEPENDENCIES
+        std_msgs
+        geometry_msgs
 )
 
-# Compile libusb from source
-if(WIN32)
-	file(GLOB SOURCES_LIB_USB
-		"src/libusb/libusb/*.h"
-		"src/libusb/libusb/*.c"
-		"src/libusb/libusb/os/*windows*"
-	)
-else()
-	file(GLOB SOURCES_LIB_USB
-		"src/libusb/libusb/*.h"
-		"src/libusb/libusb/*.c"
-		"src/libusb/libusb/os/*linux*"
-		"src/libusb/libusb/os/*posix*"
-	)
-endif()
-
-# Ignore bootloader files
-# list(FILTER SOURCES_SDK EXCLUDE REGEX "ISBootloader.*")
-list(FILTER SOURCES_SDK EXCLUDE REGEX "ISBootloaderSony.*")
-list(FILTER SOURCES_SDK EXCLUDE REGEX "ISBootloaderSTM32.*")
-
-list(APPEND SOURCES_SDK ${SOURCES_LIB_USB})
-
-# find_package(udev)
-find_library( UDEV_LIB udev )
-
-add_library(${PROJECT_NAME} STATIC ${SOURCES_SDK})
-
-# Include paths
-target_include_directories(${PROJECT_NAME} PUBLIC
-	src
-	src/util
-	src/protocol
-	src/libusb
-	src/libusb/libusb
-	src/yaml-cpp
-	tests/runtime
-	external
+include_directories(include
+  ${YAML_CPP_INCLUDE_DIR}
+  lib/inertial-sense-sdk/src #This line of CMakeList.txt stays in .external file to reference submodule
 )
 
-# Build using C11 and CXX20
-set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 11)
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_library(inertial_sense_ros
+        src/inertial_sense_ros.cpp
+)
+target_include_directories(inertial_sense_ros PUBLIC include lib/inertial-sense-sdk/src)
+ament_target_dependencies(inertial_sense_ros InertialSense ${YAML_CPP_LIBRARIES} pthread "geometry_msgs" "tf2_ros" "diagnostic_msgs" "nav_msgs" "std_msgs" "tf2" "std_srvs" "sensor_msgs")
 
-# Other settings
-if(WIN32)
-	# yamlcpp needs to know it's a static lib
-	add_definitions(-DYAML_CPP_STATIC_DEFINE)
+add_executable(inertial_sense_node src/inertial_sense_node.cpp)
+ament_target_dependencies(inertial_sense_node inertial_sense_ros "geometry_msgs" "tf2_ros" "diagnostic_msgs" "nav_msgs" "std_msgs" "tf2" "std_srvs" "sensor_msgs")
+ament_export_include_directories(include)
+ament_export_libraries(inertial_sense_ros)
 
-	# Windows specific include dir
-	target_include_directories(${PROJECT_NAME} PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/src/libusb/msvc
-	)	
-	
-	# We need to ensure windows static libs are found
-	target_link_libraries(${PROJECT_NAME} Ws2_32.lib)
-else()
-	# Linux specific include dir 
-	target_include_directories(${PROJECT_NAME} PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/src/libusb/linux
-	)
-	
-	# Linux compiler flags
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-missing-field-initializers")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -Wno-missing-field-initializers")
-		
-	# Set Linux compiler linker flag
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-	
-	# Link in Linux specific packages
-	target_link_libraries(${PROJECT_NAME} udev m)
-endif()
+# catkin_add_gtest(test_client_reconnect test/test_client_reconnect.cpp)
+# target_link_libraries(test_client_reconnect ${PROJECT_NAME})
+
+ament_export_dependencies(rclcpp sensor_msgs geometry_msgs)
+ament_package()
+
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -fms-extensions -Wl,--no-as-needed -DPLATFORM_IS_LINUX" )
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -fms-extensions -Wl,--no-as-needed -DPLATFORM_IS_LINUX")
+
+add_subdirectory(lib/inertial-sense-sdk)
