@@ -32,17 +32,17 @@ OUT OF OR IN ANY WAY CONNECTED WITH THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 ---
 
 ## Setup
-This ROS2 (Jazzy) package, uses the inertial-sense-sdk as a submodule. Clone this package into the ros2_ws workspace `src` folder, then pull the submodule.
+This ROS2 (Iron) package, uses the inertial-sense-sdk as a submodule. Clone this package into the ros2_ws workspace `src` folder, then pull the submodule.
 
 ```bash
-mkdir -p ros2_ws/src
-cd ros2_ws/src
+mkdir -p dev_ws/src
+cd dev_ws/src
 git clone https://github.com/inertialsense/inertial-sense-sdk
 ```
 then, create a symbolic link to the `ros2` directory in the `ros2_ws/src` directory using the command `sudo ln -s inertial-sense-sdk/ros2` (run this from `ros2_ws/src`). This
 allows `colcon build` to find the appropriate package to build.
 
-Return to the `ros2_ws/src` directory and run `colcon build`.
+Return to the `dev_ws/src` directory and run `colcon build`.
 
 For ROS2 to run properly, `. install/setup.bash` in the ROS2 workspace (ros2_ws) must be run to add necessary environment variables. 
 
