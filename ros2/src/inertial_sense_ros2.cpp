@@ -55,6 +55,9 @@ InertialSenseROS::InertialSenseROS(YAML::Node paramNode, bool configFlashParamet
     rs_.gps1.enabled = true;
     rs_.gps1.topic = "/gps";
 
+    rs_.rtk_pos.enabled = true;
+    rs_.rtk_pos.topic = "/rtk_pos";
+
    //if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
    //{
    //    ros::console::notifyLoggerLevelsChanged();
@@ -111,7 +114,7 @@ void InertialSenseROS::initializeIS(bool configFlashParameters)
         IS_.StopBroadcasts(true);
         initializeROS();
         configure_data_streams(true);
-        //configure_rtk();
+        configure_rtk();
         IS_.SavePersistent();
 
         if (configFlashParameters)
