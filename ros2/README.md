@@ -2,6 +2,8 @@
 
 A ROS 2 wrapper node implementation for the Inertial Sense IMX product line.
 
+Acknowledgement: This implementation is based on the work from [sbogdanov2's code](https://github.com/inertialsense/inertial-sense-sdk/tree/ros2dev), which was transitioned to work with ROS 2 Iron with additional RTK functionality.
+
 ---
 ### ***************  NOTICE  ***************
 The source code in this directory and its subdirectories is provided "as-is", without warranty or guarantee of any kind.
