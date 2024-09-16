@@ -120,7 +120,7 @@ sensors:
       enable: true
 
 gps1:
-  type: 'M8'
+  type: 'F9P'
   antenna_offset: [0, 0, 0]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
   gpsTimeUserDelay: 0.0
   messages:
@@ -160,7 +160,7 @@ gps1:
         topic: "info"
 
 gps2:
-  enabled: true
+  enabled: false
   type: 'M8'
   antenna_offset: [0, 0, 0]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
   gpsTimeUserDelay: 0.0
@@ -224,12 +224,12 @@ rtk_rover:
     ntrip_example:                              # Rename as needed
       type: ntrip                               # configure NTRIP client provider (RTK Rover = TCP Client)
       format: RTCM3
-      ip_address: '66.219.246.93'               # NTRIP service address
-      ip_port: 7777                             # NTRIP service port
+      ip_address: '192.168.1.1'               # NTRIP service address
+      ip_port: 2101                             # NTRIP service port
       # these following parameters are only valid for "client" modes
-      mount_point: ''                           # NTRIP service mount-point (if any)
-      username: ''                              # NTRIP service username (if any)
-      password: ''                              # NTRIP service password (if any)
+      mount_point: 'mount0'                           # NTRIP service mount-point (if any)
+      username: 'user1'                              # NTRIP service username (if any)
+      password: 'password1'                              # NTRIP service password (if any)
       connection_attempts:
         limit: 1                                # every time we attempt to connect, only try one time
         backoff: 2                              # default back off, ignored because only connecting once
@@ -241,8 +241,8 @@ rtk_rover:
     ntrip_example2:                             # Rename as needed
       type: ntrip                               # configure NTRIP client provider (RTK Rover = TCP Client)
       format: RTCM3
-      ip_address: '66.219.246.93'               # NTRIP service address
-      ip_port: 7777                             # NTRIP service port
+      ip_address: '192.168.1.1'               # NTRIP service address
+      ip_port: 2101                             # NTRIP service port
 
     serial_example:
       type: serial                              # host/pc serial port, always 8N1 - IS-Ros will open and forward data from the EVB to this port
@@ -266,7 +266,7 @@ rtk_rover:
   # Otherwise, you should remove all those that are unused.
 
 rtk_base:
-  enable: true
+  enable: false
   correction_source:
     imx_serial_0: gps1                          # GPS from which RTK corrections are taken (either off, GPS1 or GPS2)
     imx_serial_1: off                           # GPS from which RTK corrections are taken (either off, GPS1 or GPS2)
@@ -275,20 +275,20 @@ rtk_base:
 
   correction_outputs:
     format: RTCM3
-    select: ros_provider                             # This is one of the keys below, which defines which outputs to enable/use (this can be many).
+    select: ntrip_1                             # This is one of the keys below, which defines which outputs to enable/use (this can be many).
 
     # - ros_provider
     # - xbee_radio
     # RTK corrections
     ntrip_1:
       type: ntrip                               # configure NTRIP output provider (TCP Server)
-      ip_address: '127.0.0.1'               # (required) NTRIP service address
-      ip_port: 7777                             # NTRIP service port, default 7777
+      ip_address: '192.168.1.1'             # (required) NTRIP service address
+      ip_port: 2101                             # NTRIP service port, default 7777
       # FIXME:  The following is fluff functionality that we probably shouldn't bother with, but someone might find it useful??
-      mount: ''                                 # (optional) NTRIP service mount-point, the mount this output maps to
-      authentication: "none"                    # (optional) specified the type of authentication that is used to validate a user (basic, oauth, rsa, etc)
-      username: ''                              # (optional) NTRIP service username which is required to connect to this service
-      password: ''                              # (optional) NTRIP service password
+      mount: 'mount0'                                 # (optional) NTRIP service mount-point, the mount this output maps to
+      authentication: "basic"                    # (optional) specified the type of authentication that is used to validate a user (basic, oauth, rsa, etc)
+      username: 'user1'                              # (optional) NTRIP service username which is required to connect to this service
+      password: 'password1'                              # (optional) NTRIP service password
       credentials: '/etc/ntrip/users.txt'       # alternatively to username/password, you can specify a credentials file (a list of 'username:password') which is used for authentication of multiple users
 
     serial_1:

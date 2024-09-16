@@ -55,9 +55,6 @@ InertialSenseROS::InertialSenseROS(YAML::Node paramNode, bool configFlashParamet
     rs_.gps1.enabled = true;
     rs_.gps1.topic = "/gps";
 
-    rs_.rtk_pos.enabled = true;
-    rs_.rtk_pos.topic = "/rtk_pos";
-
    //if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
    //{
    //    ros::console::notifyLoggerLevelsChanged();
@@ -869,14 +866,14 @@ void InertialSenseROS::connect_rtk_client(RtkRoverCorrectionProvider_Ntrip& conf
     std::string RTK_connection = config.get_connection_string();
 
     int RTK_connection_attempt_count = 0;
-    while (++RTK_connection_attempt_count < config.connection_attempt_limit_)
+    while (RTK_connection_attempt_count < config.connection_attempt_limit_)
     {
         config.connected_ = IS_.OpenConnectionToServer(RTK_connection);
 
         int sleep_duration = RTK_connection_attempt_count * config.connection_attempt_backoff_;
         if (config.connected_) {
             RCLCPP_INFO_STREAM(rclcpp::get_logger("successfully_connected_rtk"),"InertialSenseROS: Successfully connected to RTK server [" << RTK_connection  << "]. [Attempt " << RTK_connection_attempt_count << "]");
-            break;
+            break;  
         }
         // fall-through
 
@@ -888,6 +885,8 @@ void InertialSenseROS::connect_rtk_client(RtkRoverCorrectionProvider_Ntrip& conf
        }
        //rclcpp::Duration(sleep_duration,0).sleep(); // we will always sleep on a failure...
        rclcpp::Rate r(sleep_duration); r.sleep();
+
+       RTK_connection_attempt_count++;
    }
 
    config.connecting_ = false;
