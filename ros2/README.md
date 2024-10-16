@@ -94,12 +94,35 @@ Below are the steps to configure and use RTK via NTRIP.
 
 2. **Run the RTK Receiver Node**:
 
+Adjust line 222 in inertial-sense-sdk/ros2/launch/example_params.yaml to use ntrip_example.
+
+Run the following the compile the program:
 ```bash
 ros2 run inertial_sense_ros2 new_target "inertial-sense-sdk/ros2/launch/example_params.yaml" 
 
 ```
 
-RTK connections are received by connecting to the base station at TCP:RTCM3:192.168.1.1:2101:mount0:user1:password1.
+RTK corrections are received by connecting to the base station at TCP:RTCM3:192.168.1.1:2101:mount0:user1:password1.
+
+### RFD 900x-US (Serial) 
+
+Below are the steps to configure and use RTK via RFD 900x-US through serial port. 
+
+1. **Connect to the Network**:
+   Ensure that your computer is connected to the `harelab-rtk` network.
+
+2. **Run the RTK Receiver Node**:
+Adjust line 222 in inertial-sense-sdk/ros2/launch/example_params.yaml to use serial_example. Change the serial port number if necessary. The serial port being occupied by the RFD can be obtained using
+```bash
+ls /dev/ttyU*
+```
+
+Run the following the compile the program:
+```bash
+ros2 run inertial_sense_ros2 new_target "inertial-sense-sdk/ros2/launch/example_params.yaml" 
+
+```
+RTK corrections are received by connecting to the base station using the serial port at /dev/ttyUSBx.
 
 
 ## Timestamps
