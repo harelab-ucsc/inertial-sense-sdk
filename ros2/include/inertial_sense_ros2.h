@@ -119,6 +119,7 @@ public:
     void configure_flash_parameters();
     void configure_rtk();
     void connect_rtk_client(RtkRoverCorrectionProvider_Ntrip& config);
+    void connect_rtk_serial(RtkRoverCorrectionProvider_Serial& config);
     void start_rtk_server(RtkBaseCorrectionProvider_Ntrip& config);
 
     void configure_data_streams(bool firstrun);

@@ -28,7 +28,7 @@
 
 
 #topic: "inertialsense"
-port: [/dev/ttyACM0, /dev/ttyACM1, /dev/ttyACM2]
+port: [/dev/ttyACM0, /dev/ttyACM1, /dev/ttyACM2, /dev/ttyACM3]
 baudrate: 921600
 enable_log: false
 publishTf: true                                 # Publish Transform Frame (TR)
@@ -219,7 +219,7 @@ rtk_rover:
   positioning_enable: true                     # Enable RTK precision positioning at GPS1
   compassing_enable: false                      # Enable RTK compassing (dual GNSS moving baseline RTK) at GPS2
   correction_input:
-    select: ntrip_example                       # Select correction input settings
+    select: serial_example                       # Select correction input settings
 
     ntrip_example:                              # Rename as needed
       type: ntrip                               # configure NTRIP client provider (RTK Rover = TCP Client)
@@ -247,8 +247,8 @@ rtk_rover:
     serial_example:
       type: serial                              # host/pc serial port, always 8N1 - IS-Ros will open and forward data from the EVB to this port
       format: RTCM3
-      port: /dev/ttyACM1                        # Serial port of local host where corrections can be read from (not the EVB/IMX port!)
-      baud_rate: 115200                         # Serial baud rate
+      port: /dev/ttyUSB2                        # Serial port of local host where corrections can be read from (not the EVB/IMX port!)
+      baud_rate: 57600                         # Serial baud rate
 
     ros_provider:
       type: "ros_topic"                         # to/from ROS topics - ROS topic ot subscribe to, received RTCM3 corrections are passed to the EVB
