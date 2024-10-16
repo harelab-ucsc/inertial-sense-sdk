@@ -247,7 +247,7 @@ rtk_rover:
     serial_example:
       type: serial                              # host/pc serial port, always 8N1 - IS-Ros will open and forward data from the EVB to this port
       format: RTCM3
-      port: /dev/ttyUSB2                        # Serial port of local host where corrections can be read from (not the EVB/IMX port!)
+      port: /dev/ttyUSB0                        # Serial port of local host where corrections can be read from (not the EVB/IMX port!)
       baud_rate: 57600                         # Serial baud rate
 
     ros_provider:

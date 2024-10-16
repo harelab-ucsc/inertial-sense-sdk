@@ -996,8 +996,6 @@ void InertialSenseROS::configure_rtk()
                 SET_CALLBACK(DID_GPS1_RTK_POS_MISC, gps_rtk_misc_t, RTK_Misc_callback, rs_.rtk_pos.period);
                 SET_CALLBACK(DID_GPS1_RTK_POS_REL, gps_rtk_rel_t, RTK_Rel_callback, rs_.rtk_pos.period);
             }
-            // printf("%s\n", RTK_rover_->correction_input->type_.c_str());
-            std::cout << RTK_rover_->correction_input->type_ << std::endl;
             if (RTK_rover_->correction_input && (RTK_rover_->correction_input->type_ == "serial")) {
                 RCLCPP_INFO(rclcpp::get_logger("config_rtk_rover_w_serial"),"InertialSenseROS: Configuring RTK Rover with serial");
                 rs_.rtk_pos.enabled = true;
@@ -1006,7 +1004,7 @@ void InertialSenseROS::configure_rtk()
                 SET_CALLBACK(DID_GPS1_RTK_POS_MISC, gps_rtk_misc_t, RTK_Misc_callback, rs_.rtk_pos.period);
                 SET_CALLBACK(DID_GPS1_RTK_POS_REL, gps_rtk_rel_t, RTK_Rel_callback, rs_.rtk_pos.period);
 
-                start_rtk_connectivity_watchdog_timer();
+                // start_rtk_connectivity_watchdog_timer();
             }
         }
         if (GNSS_Compass_)
@@ -1094,12 +1092,9 @@ void InertialSenseROS::connect_rtk_serial(RtkRoverCorrectionProvider_Serial& con
 {
     bool connected_ = true;
     int connection_attempt_limit_ = 10;
-    int connection_attempt_backoff_ = 10;
+    int connection_attempt_backoff_ = 2;
 
-    // [type]:[port]:[baudrate]
-    // std::string RTK_connection = "RTCM3:" + config.port_ + ":" + std::to_string(config.baud_rate_);
-    std::string RTK_connection = "SERIAL:RTCM3:/dev/ttyUSB0:57600"; 
-    // std::string RTK_connection = "SERIAL:RTCM3:" + config.port_ + ":" + std::to_string(config.baud_rate_);
+    std::string RTK_connection = "SERIAL:RTCM3:" + config.port_ + ":" + std::to_string(config.baud_rate_);
     RCLCPP_INFO_STREAM(rclcpp::get_logger("RTK_serial_connection_string"), "RTK connection string: " << RTK_connection);
     int RTK_connection_attempt_count = 1;
     while (RTK_connection_attempt_count < connection_attempt_limit_)
@@ -1119,7 +1114,7 @@ void InertialSenseROS::connect_rtk_serial(RtkRoverCorrectionProvider_Serial& con
        } else {
            RCLCPP_ERROR_STREAM(rclcpp::get_logger("unable_to_connect_giveup_serial"),"InertialSenseROS: Unable to establish connection with RTK serial [" << RTK_connection << "] after attempt " << RTK_connection_attempt_count << ". Giving up.");
        }
-       rclcpp::Rate r(sleep_duration); r.sleep();
+       rclcpp::Rate r(sleep_duration); r.sleep(); // TODO: Is this in ms? It's way too fast.
 
        RTK_connection_attempt_count++;
    }
@@ -1897,7 +1892,6 @@ void InertialSenseROS::preint_IMU_callback(eDataIDs DID, const pimu_t *const msg
 
 void InertialSenseROS::RTK_Misc_callback(eDataIDs DID, const gps_rtk_misc_t *const msg)
 {
-    // std::cout << "RTK_Misc_callback Message: " << msg << std::endl;
     inertial_sense_ros2::msg::RTKInfo rtk_info;
     if (abs(GPS_towOffset_) > 0.001)
     {
@@ -1930,7 +1924,6 @@ void InertialSenseROS::RTK_Misc_callback(eDataIDs DID, const gps_rtk_misc_t *con
 
 void InertialSenseROS::RTK_Rel_callback(eDataIDs DID, const gps_rtk_rel_t *const msg)
 {
-    // std::cout << "RTK_Misc_callback Message: " << msg << std::endl;
     inertial_sense_ros2::msg::RTKRel rtk_rel;
     std::string fixStatusString;
     if (abs(GPS_towOffset_) > 0.001)
