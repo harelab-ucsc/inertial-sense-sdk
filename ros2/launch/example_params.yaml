@@ -28,11 +28,12 @@
 
 
 #topic: "inertialsense"
-port: [/dev/ttyACM0, /dev/ttyACM1, /dev/ttyACM2, /dev/ttyACM3]
+port: [/dev/ttyAMA0, /dev/ttyACM0, /dev/ttyACM1, /dev/ttyACM2, /dev/ttyACM3]
+# port: /dev/ttyACM0
 baudrate: 921600
 enable_log: false
 publishTf: true                                 # Publish Transform Frame (TR)
-frame_id: ""                                    # FIXME: What is this?  is it just the FrameID to use in the ROS messages?
+frame_id: "IS-IMX-5"                                    # FIXME: What is this?  is it just the FrameID to use in the ROS messages?
 mag_declination: 0.0
 ref_lla: [0.0, 0.0, 0.0]
 # factory_reset: true                             # Reset flash config to factory defaults on startup.
@@ -59,7 +60,7 @@ ref_lla: [0.0, 0.0, 0.0]
 firmware_status:
   message:
     topic: "firmware_status"
-    enable: true
+    enable: false
 
 transform_frame:
   # static_transform:
@@ -71,41 +72,45 @@ ins:
   rotation: [0, 0, 0]                           # Rotation in radians about the X,Y,Z axes from Sensor Frame to Intermediate Output Frame.  Order applied: Z,Y,X.
   offset: [0, 0 ,0]                             # X,Y,Z offset in meters from Intermediate Output Frame to INS Output Frame.
   # navigation_dt_ms: 16                          # EKF update period.  IMX-5:  16 default, 8 max.  Use `msg/ins.../period` to reduce INS output data rate.
-  navigation_dt_ms: 16                           # EKF update period.  uINS-3: 4  default, 1 max.  Use `msg/ins.../period` to reduce INS output data rate.
-  dynamic_model: 8                              # FIXME: these should be named types/srtring (PORTABLE, STATIONARY, AGV, UAV, etc)
-  enable_covariance: false                      # Include covariance data in odom_ins_... messages
+  navigation_dt_ms: 8                           # EKF update period.  uINS-3: 4  default, 1 max.  Use `msg/ins.../period` to reduce INS output data rate.
+  dynamic_model: 8                              # FIXME: these should be named types/string (PORTABLE, STATIONARY, AGV, UAV, etc)
+  enable_covariance: true                      # Include covariance data in odom_ins_... messages
   messages:
     odom_ins_enu:
       topic: "odom_ins_enu"
       enable: true
     odom_ins_ned:
       topic: "odom_ins_ned"
-      enable: true
+      enable: false
     odom_ins_ecef:
       topic: "odom_ins_ecef"
-      enable: true
+      enable: false
     did_ins1:
       topic: "ins_eul_uvw_ned"
-      enable: true
+      enable: false
     did_ins2:
       topic: "ins_quat_uvw_lla"
       enable: true
     did_ins4:
       topic: "ins_quat_ve_ecef"
-      enable: true
+      enable: false
     inl2_states:
       topic: "inl2_states"
-      enable: true
+      enable: false
 
 sensors:
-  messages:  
+  messages:
     imu:              # Publish IMU angular rates and linear acceleration
       topic: "imu"
-      enable: false
+      enable: true
       period: 1
+    imu_raw:
+      topic: "imu_raw"
+      enable: true
+      period: 5
     pimu:             # Publish preintegrated IMU delta theta and delta velocity
       topic: "pimu"
-      enable: true
+      enable: false
       period: 1
     magnetometer:
       topic: "mag"
@@ -120,20 +125,21 @@ sensors:
       enable: true
 
 gps1:
+  enable: true
   type: 'F9P'
   antenna_offset: [0, 0, 0]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
   gpsTimeUserDelay: 0.0
   messages:
     pos_vel:
       topic: "gps1/pos_vel"
-      enable: true
+      enable: false
       period: 1
     navsatfix:
       topic: "/NavSatFix"                        # /navsatfix
       enable: false
     info:
       topic: "gps1/info"                        # inertialsense/gps1/info
-      enable: true
+      enable: false
       period: 5                                 # Publish every 1 second (200ms x 5)
     raw:
       topic: "gps1/raw"                         # Observation "/obs", ephemeris "/eph", and GLONASS ephemeris "/gep" are appended to the end of the topic name.  (i.e. topic="gps1_raw" results is "gps1_raw_obs" published as actual topic)
@@ -141,10 +147,10 @@ gps1:
       period: 5                                 # Publish every 1 second (200ms x 5)
     rtk_pos_rel:
       topic: "gps1/pos_vel"
-      enable: true
+      enable: false
       period: 1
     rel:
-      enable: true
+      enable: false
       topic: "rel"
     base:
       topic: "base"
@@ -167,14 +173,14 @@ gps2:
   messages:
     pos_vel:
       topic: "gps2/pos_vel"
-      enable: true
+      enable: false
       period: 1
     navsatfix:
       topic: "/NavSatFix"                        # /navsatfix
-      enable: true
+      enable: false
     info:
       topic: "gps2/info"                        # inertialsense/gps1/info
-      enable: true
+      enable: false
       period: 5                                 # Publish every 1 second (200ms x 5)
     raw:
       topic: "gps2/raw"                         # Observation "/obs", ephemeris "/eph", and GLONASS ephemeris "/gep" are appended to the end of the topic name.  (i.e. topic="gps1_raw" results is "gps1_raw_obs" published as actual topic)
@@ -295,7 +301,7 @@ rtk_base:
       type: serial                              # host/pc serial port, always 8N1 - IS-Ros will open and forward data from the EVB to this port
       port: "/dev/ttyACM0"                      # the host's local serial port to which data is written (not the EVB/IMX port!)
       baud_rate: 115200
-      
+
     # RTK corrections to/from ROS topics -
     ros_provider:
       type: ros_topic                           # publishes RTCM3 corrections onto the specific ROS topic

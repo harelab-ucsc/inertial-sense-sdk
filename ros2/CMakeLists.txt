@@ -1,4 +1,5 @@
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 cmake_minimum_required(VERSION 3.10.0)
 project(inertial_sense_ros2)
 #find_package(rosidl_typesupport_c REQUIRED)
@@ -114,4 +115,10 @@ target_link_libraries(new_target ${RESOLVED_ROS_DIR}/../libInertialSenseSDK.a ${
 #link_directories(/home/s/Inertial_Sense/imx/ros2_ws/src/inertial-sense-sdk)
 install(TARGETS new_target #test_new_target
         DESTINATION lib/${PROJECT_NAME})
+
+install(
+  PROGRAMS scripts/vi_time_sync.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()

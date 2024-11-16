@@ -160,7 +160,6 @@ public:
    // } ltcf;
 
     //ros::Publisher did_ins_1_pub_;
-
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr did_ins_1_pub_;
     //ros::Publisher did_ins_2_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr did_ins_2_pub_;
@@ -205,6 +204,8 @@ public:
     void mag_callback(eDataIDs DID, const magnetometer_t *const msg);
     void baro_callback(eDataIDs DID, const barometer_t *const msg);
     void preint_IMU_callback(eDataIDs DID, const pimu_t *const msg);
+    // HARE Lab addition: imu_raw_callback
+    void imu_raw_callback(eDataIDs DID, const imu_t *const msg);
     void strobe_in_time_callback(eDataIDs DID, const strobe_in_time_t *const msg);
     void diagnostics_callback();
     void GPS_pos_callback(eDataIDs DID, const gps_pos_t *const msg);
@@ -238,6 +239,8 @@ public:
 
         TopicHelper imu;
         TopicHelper pimu;
+	// HARE Lab addition: imu_raw
+	TopicHelper imu_raw;
         TopicHelper magnetometer;
         TopicHelper barometer;
         TopicHelper strobe_in;
@@ -400,6 +403,8 @@ public:
     nav_msgs::msg::Odometry msg_odom_enu;
     inertial_sense_ros2::msg::INL2States msg_inl2_states;
     sensor_msgs::msg::Imu msg_imu;
+    // HARE Lab addition: imu_raw
+    sensor_msgs::msg::Imu msg_imu_raw;
     inertial_sense_ros2::msg::PIMU msg_pimu;
     inertial_sense_ros2::msg::GPS msg_gps1;
     inertial_sense_ros2::msg::GPS msg_gps2;

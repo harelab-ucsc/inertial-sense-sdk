@@ -574,7 +574,7 @@ bool InertialSense::UpdateClient()
         while ((ptype = is_comm_parse(comm)) != _PTYPE_NONE)
         {
             int id = 0;
-            string str;
+            // string str; //hare testing
 
             switch (ptype)
             {
@@ -588,6 +588,7 @@ bool InertialSense::UpdateClient()
                         id = messageStatsGetbitu(comm->rxPkt.data.ptr, 24, 12);
                         if ((id == 1029) && (comm->rxPkt.data.size < 1024))
                         {
+			    string str; //hare testing
                             str = string().assign(reinterpret_cast<char*>(comm->rxPkt.data.ptr + 12), comm->rxPkt.data.size - 12);
                         }
                     }
@@ -625,7 +626,8 @@ bool InertialSense::UpdateClient()
 
             if (ptype != _PTYPE_NONE)
             {	// Record message info
-                messageStatsAppend(str, m_clientMessageStats, ptype, id, m_timeMs);
+                string str; //hare testing
+		messageStatsAppend(str, m_clientMessageStats, ptype, id, m_timeMs);
             }
         }
     }
