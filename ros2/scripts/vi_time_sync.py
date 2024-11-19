@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import pdb
 import rclpy
 from rclpy.node import Node
 from rosbag2_py import SequentialReader, SequentialWriter, StorageOptions, ConverterOptions
@@ -8,7 +8,7 @@ from inertial_sense_ros2.msg import DIDINS2
 import argparse
 import numpy as np
 from rosidl_runtime_py.utilities import get_message
-from rclpy.serialization import deserialize_message
+from rclpy.serialization import deserialize_message, serialize_message
 
 class BagProcessor:
     def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic):
@@ -37,6 +37,7 @@ class BagProcessor:
         image_msgs = []
         ins_msgs = []
 
+        print('reading bag')
         # Read and process messages
         while reader.has_next():
             topic, data, timestamp = reader.read_next()
@@ -51,23 +52,30 @@ class BagProcessor:
             else:
                 # Copy all other topics as-is
                 writer.write(topic, data, timestamp)
+        print(f'image_msgs length: {len(image_msgs)}')
+        print(f'ins_msgs length: {len(ins_msgs)}')
+        print('bag read done')
 
         # Process INS messages and adjust image timestamps
         for ins_msg in ins_msgs:
             if ins_msg.hdw_status & 2:
+                print('found strobe triggered INS2')
                 ins_timestamp = ins_msg.header.stamp
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
                 if closest_image:
+                    print("correlated msg") 
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
                     new_time = ins_timestamp.sec + ins_timestamp.nanosec * 1e-9
                     delta = old_time - new_time
                     self.deltas.append(delta)
                     new_image = self.update_image_timestamp(closest_image, ins_timestamp)
+                    new_image = serialize_message(new_image)
+                    pdb.set_trace()
                     writer.write(self.image_topic, new_image, ins_timestamp)
 
-        mean = np.mean(np.array(deltas))
-        std = np.std(np.array(deltas))
-        print('time correction mean:' + mean + 'seconds' + 'std:' + std)
+        mean = np.mean(np.array(self.deltas))
+        std = np.std(np.array(self.deltas))
+        print(f'time correction mean: {mean} sec, std: {std} sec')
         writer.close()
 
     def find_closest_image(self, target_timestamp, image_msgs):
@@ -79,6 +87,7 @@ class BagProcessor:
             new_time = target_timestamp.sec + target_timestamp.nanosec * 1e-9
             diff = abs(old_time - new_time)
             if diff < min_diff:
+                print('found closer image timestamp')
                 closest_image = image
                 min_diff = diff
         return closest_image
