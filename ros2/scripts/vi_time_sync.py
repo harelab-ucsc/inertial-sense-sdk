@@ -81,6 +81,7 @@ class BagProcessor:
                 print('found strobe triggered INS2')
                 ins_timestamp = ins_msg.header.stamp
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
+                ins_timestamp_int = ins_timestamp.sec * 1e9 + ins_timestamp.nanosec
                 if closest_image:
                     print("correlated msg")
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
@@ -97,7 +98,7 @@ class BagProcessor:
                     self.append_pose_to_json(ins_msg, updated_image, timestamp_str)
 
                     new_image = serialize_message(updated_image)
-                    writer.write(self.image_topic, new_image, ins_timestamp)
+                    writer.write(self.image_topic, new_image, ins_timestamp_int)
 
         mean = np.mean(np.array(self.deltas))
         std = np.std(np.array(self.deltas))
