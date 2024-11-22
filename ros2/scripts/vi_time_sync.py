@@ -18,6 +18,7 @@ import json
 import yaml
 from pyproj import Proj, Transformer
 
+from rectify import rectify_image
 
 class BagProcessor:
     def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic, intrinsics_path):
@@ -88,7 +89,7 @@ class BagProcessor:
                 ins_timestamp = ins_msg.header.stamp
                 ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
-                ins_timestamp_int = ins_timestamp.sec * 1e9 + ins_timestamp.nanosec
+                ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
                 if closest_image:
                     # Compute the time difference
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
@@ -129,6 +130,7 @@ class BagProcessor:
                 # print('found closer image timestamp')
                 closest_image = image
                 min_diff = diff
+        print(f'found image matching timestamp: {target_timestamp}')
         return closest_image
 
     def update_image_timestamp(self, image_msg, new_timestamp):
