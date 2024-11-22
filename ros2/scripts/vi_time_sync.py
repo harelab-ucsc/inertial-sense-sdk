@@ -9,19 +9,34 @@ import argparse
 import numpy as np
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message, serialize_message
+
 import matplotlib.pyplot as plt
 from cv_bridge import CvBridge
 import cv2
+import os
+import json
+import yaml
+from pyproj import Proj, Transformer
 
 
 class BagProcessor:
-    def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic):
+    def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic, intrinsics_path):
         self.input_bag_path = input_bag_path
         self.output_bag_path = output_bag_path
         self.image_topic = image_topic
         self.ins_topic = ins_topic
         self.deltas = []
         self.br = CvBridge()
+        self.frames = []
+        self.intrinsics = self.load_intrinsics(intrinsics_path)
+
+        # Initialize UTM transformer
+        self.transformer = Transformer.from_crs("EPSG:4326", "EPSG:32610", always_xy=True)  # Replace EPSG:32633 with appropriate UTM zone
+
+    def load_intrinsics(self, intrinsics_path):
+        """Load camera intrinsics from a YAML file."""
+        with open(intrinsics_path, "r") as file:
+            return yaml.safe_load(file)
 
     def process_bag(self):
         # Initialize reader and writer
@@ -41,6 +56,9 @@ class BagProcessor:
 
         image_msgs = []
         ins_msgs = []
+
+        # Ensure output directories exist
+        os.makedirs("images", exist_ok=True)
 
         print('reading bag')
         # Read and process messages
@@ -71,32 +89,31 @@ class BagProcessor:
                 ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
                 if closest_image:
-                    # compute the time difference
+                    # Compute the time difference
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
                     new_time = ins_timestamp.sec + ins_timestamp.nanosec * 1e-9
                     delta = old_time - new_time
                     self.deltas.append(delta)
 
-                    # adjust timestamps with strobe-triggered INS2 msgs and write to bag
-                    new_image = self.update_image_timestamp(closest_image, ins_timestamp)
-                    new_image = serialize_message(new_image)
-                    print(f"Writing topic {self.image_topic} with timestamp {ins_timestamp}")
-                    writer.write(self.image_topic, new_image, ins_timestamp_int)
+                    # Update image timestamp and save the image
+                    updated_image = self.update_image_timestamp(closest_image, ins_timestamp)
+                    timestamp_str = f"{ins_timestamp.sec}.{ins_timestamp.nanosec:09d}"
+                    self.save_image(updated_image, timestamp_str)
 
-                    # save images as *.png's
-                    image = self.br.imgmsg_to_cv2(closest_image, desired_encoding='passthrough')
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    cv2.imwrite(f'frame_{ins_timestamp.sec}.{str(ins_timestamp.nanosec).rjust(9, "0")}.png', image)
+                    # Append pose to JSON
+                    self.append_pose_to_json(ins_msg, updated_image, timestamp_str)
 
-                    # waste management
-                    closest_image = None
+                    new_image = serialize_message(updated_image)
+                    writer.write(self.image_topic, new_image, ins_timestamp)
 
-        deltas = np.array(self.deltas)
-        mean = np.mean(deltas)
-        std = np.std(deltas)
-        plt.hist(deltas, bins=50)
-        plt.savefig("hist.png")
-        print(f'time correction mean: {mean} sec, std: {std} sec, {deltas.shape} samples')
+        mean = np.mean(np.array(self.deltas))
+        std = np.std(np.array(self.deltas))
+        print(f'time correction mean: {mean} sec, std: {std} sec')
+
+        # Save JSON file
+        self.save_json()
+
+        # Close the bag writer
         writer.close()
 
     def find_closest_image(self, target_timestamp, image_msgs):
@@ -126,6 +143,42 @@ class BagProcessor:
         new_image.step = image_msg.step
         return new_image
 
+    def save_image(self, image_msg, timestamp_str):
+        """Save the image message as a PNG file."""
+        img_data = np.frombuffer(image_msg.data, dtype=np.uint8).reshape(image_msg.height, image_msg.width, -1)
+        cv2.imwrite(f"images/{timestamp_str}.png", img_data)
+
+    def append_pose_to_json(self, ins_msg, image_msg, timestamp_str):
+        """Append the pose data from INS message to the JSON."""
+        # Convert LLA to UTM
+        utm_x, utm_y = self.transformer.transform(ins_msg.lla[1], ins_msg.lla[0])  # (longitude, latitude)
+        altitude = ins_msg.lla[2]
+
+        transform_matrix = [
+            [1, 0, 0, utm_x],
+            [0, 1, 0, utm_y],
+            [0, 0, 1, altitude],
+            [0, 0, 0, 1]
+        ]
+
+        pose = {
+            "w": image_msg.width,
+            "h": image_msg.height,
+            "fl_x": self.intrinsics["fx"],
+            "fl_y": self.intrinsics["fy"],
+            "cx": self.intrinsics["cx"],
+            "cy": self.intrinsics["cy"],
+            "timestamp": ins_msg.header.stamp.sec + ins_msg.header.stamp.nanosec * 1e-9,
+            "file_path": f"images/{timestamp_str}.png",
+            "transform_matrix": transform_matrix
+        }
+        self.frames.append(pose)
+
+    def save_json(self):
+        """Save all frames to a JSON file."""
+        with open("poses.json", "w") as json_file:
+            json.dump({"frames": self.frames}, json_file, indent=4)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Fix image timestamps in a ROS2 bag file using INS messages.")
@@ -133,12 +186,13 @@ def main():
     parser.add_argument("output_bag", help="Path to the output ROS2 bag file")
     parser.add_argument("image_topic", help="Image topic name (e.g., /camera/image_raw)")
     parser.add_argument("ins_topic", help="INS topic name (e.g., /ins/data)")
+    parser.add_argument("intrinsics", help="Path to the YAML file with camera intrinsics")
 
     args = parser.parse_args()
 
     rclpy.init()
 
-    processor = BagProcessor(args.input_bag, args.output_bag, args.image_topic, args.ins_topic)
+    processor = BagProcessor(args.input_bag, args.output_bag, args.image_topic, args.ins_topic, args.intrinsics)
     processor.process_bag()
 
     rclpy.shutdown()
