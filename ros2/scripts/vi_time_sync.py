@@ -130,7 +130,7 @@ class BagProcessor:
                 # print('found closer image timestamp')
                 closest_image = image
                 min_diff = diff
-        print(f'found image matching timestamp: {target_timestamp}')
+        print(f'    found image matching timestamp: {target_timestamp}')
         return closest_image
 
     def update_image_timestamp(self, image_msg, new_timestamp):
