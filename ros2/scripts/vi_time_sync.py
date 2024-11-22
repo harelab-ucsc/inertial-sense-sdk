@@ -18,7 +18,7 @@ import json
 import yaml
 from pyproj import Proj, Transformer
 
-from rectify import rectify_image
+#from rectify import rectify_image
 
 class BagProcessor:
     def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic, intrinsics_path):
@@ -182,6 +182,30 @@ class BagProcessor:
         with open("poses.json", "w") as json_file:
             json.dump({"frames": self.frames}, json_file, indent=4)
 
+    def rectify_image(self, raw_image, intrinsics, distortion_coeffs, resolution):
+        # Convert lists to numpy arrays
+        K = np.array([[intrinsics[0], 0, intrinsics[2]],
+                      [0, intrinsics[1], intrinsics[3]],
+                      [0, 0, 1]])
+        D = np.array(distortion_coeffs)
+
+        # Get image resolution
+        width, height = resolution
+
+        # Create rectification and projection maps
+        map1, map2 = cv2.initUndistortRectifyMap(K, D, None, K, (width, height), cv2.CV_32FC1)
+
+        # Convert raw image message to OpenCV image using rgb8 encoding
+        cv_image = self.br.imgmsg_to_cv2(raw_image, desired_encoding='mono8')
+
+        # Rectify the image using the maps
+        rectified_image = cv2.remap(cv_image, map1, map2, interpolation=cv2.INTER_LINEAR)
+
+        # Convert the rectified image back to ROS Image message using rgb8 encoding
+        rectified_img_msg = self.br.cv2_to_imgmsg(rectified_image, encoding='mono8')
+        rectified_img_msg.header = raw_image.header
+
+        return rectified_img_msg
 
 def main():
     parser = argparse.ArgumentParser(description="Fix image timestamps in a ROS2 bag file using INS messages.")
