@@ -9,6 +9,9 @@ import argparse
 import numpy as np
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message, serialize_message
+
+import matplotlib.pyplot as plt
+from cv_bridge import CvBridge
 import cv2
 import os
 import json
@@ -23,6 +26,7 @@ class BagProcessor:
         self.image_topic = image_topic
         self.ins_topic = ins_topic
         self.deltas = []
+        self.br = CvBridge()
         self.frames = []
         self.intrinsics = self.load_intrinsics(intrinsics_path)
 
@@ -45,7 +49,7 @@ class BagProcessor:
         writer = SequentialWriter()
         writer.open(StorageOptions(uri=self.output_bag_path, storage_id="mcap"), converter_options)
 
-        topic_type_map = {t.name: t.type for t in topics_and_types}
+        topic_type_map = {t.name:t.type for t in topics_and_types}
         # Register all topics with the writer
         for topic in topics_and_types:
             writer.create_topic(topic)
@@ -72,18 +76,21 @@ class BagProcessor:
                 # Copy all other topics as-is
                 writer.write(topic, data, timestamp)
         print(f'image_msgs length: {len(image_msgs)}')
-        print(f'ins_msgs length: {len(ins_msgs)}')
-        print('bag read done')
+        print(f'ins_msgs length: {len(ins_msgs)} \n')
+        print('bag read done \n')
+
+        HDW_STATUS_STROBE_IN_EVENT = 0x00000020
 
         # Process INS messages and adjust image timestamps
         for ins_msg in ins_msgs:
-            if ins_msg.hdw_status & 2:
-                print('found strobe triggered INS2')
+            if ins_msg.hdw_status & HDW_STATUS_STROBE_IN_EVENT == HDW_STATUS_STROBE_IN_EVENT:
+                # print('found strobe triggered INS2')
                 ins_timestamp = ins_msg.header.stamp
+                ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
                 ins_timestamp_int = ins_timestamp.sec * 1e9 + ins_timestamp.nanosec
                 if closest_image:
-                    print("correlated msg")
+                    # Compute the time difference
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
                     new_time = ins_timestamp.sec + ins_timestamp.nanosec * 1e-9
                     delta = old_time - new_time
@@ -107,6 +114,7 @@ class BagProcessor:
         # Save JSON file
         self.save_json()
 
+        # Close the bag writer
         writer.close()
 
     def find_closest_image(self, target_timestamp, image_msgs):
@@ -118,7 +126,7 @@ class BagProcessor:
             new_time = target_timestamp.sec + target_timestamp.nanosec * 1e-9
             diff = abs(old_time - new_time)
             if diff < min_diff:
-                print('found closer image timestamp')
+                # print('found closer image timestamp')
                 closest_image = image
                 min_diff = diff
         return closest_image
