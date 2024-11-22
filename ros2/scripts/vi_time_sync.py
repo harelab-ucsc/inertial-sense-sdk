@@ -9,6 +9,10 @@ import argparse
 import numpy as np
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message, serialize_message
+import matplotlib.pyplot as plt
+from cv_bridge import CvBridge
+import cv2
+
 
 class BagProcessor:
     def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic):
@@ -17,6 +21,7 @@ class BagProcessor:
         self.image_topic = image_topic
         self.ins_topic = ins_topic
         self.deltas = []
+        self.br = CvBridge()
 
     def process_bag(self):
         # Initialize reader and writer
@@ -29,7 +34,7 @@ class BagProcessor:
         writer = SequentialWriter()
         writer.open(StorageOptions(uri=self.output_bag_path, storage_id="mcap"), converter_options)
 
-        topic_type_map = {t.name: t.type for t in topics_and_types}
+        topic_type_map = {t.name:t.type for t in topics_and_types}
         # Register all topics with the writer
         for topic in topics_and_types:
             writer.create_topic(topic)
@@ -53,29 +58,45 @@ class BagProcessor:
                 # Copy all other topics as-is
                 writer.write(topic, data, timestamp)
         print(f'image_msgs length: {len(image_msgs)}')
-        print(f'ins_msgs length: {len(ins_msgs)}')
-        print('bag read done')
+        print(f'ins_msgs length: {len(ins_msgs)} \n')
+        print('bag read done \n')
+
+        HDW_STATUS_STROBE_IN_EVENT = 0x00000020
 
         # Process INS messages and adjust image timestamps
         for ins_msg in ins_msgs:
-            if ins_msg.hdw_status & 2:
-                print('found strobe triggered INS2')
+            if ins_msg.hdw_status & HDW_STATUS_STROBE_IN_EVENT == HDW_STATUS_STROBE_IN_EVENT:
+                # print('found strobe triggered INS2')
                 ins_timestamp = ins_msg.header.stamp
+                ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
                 if closest_image:
-                    print("correlated msg") 
+                    # compute the time difference
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
                     new_time = ins_timestamp.sec + ins_timestamp.nanosec * 1e-9
                     delta = old_time - new_time
                     self.deltas.append(delta)
+
+                    # adjust timestamps with strobe-triggered INS2 msgs and write to bag
                     new_image = self.update_image_timestamp(closest_image, ins_timestamp)
                     new_image = serialize_message(new_image)
-                    pdb.set_trace()
-                    writer.write(self.image_topic, new_image, ins_timestamp)
+                    print(f"Writing topic {self.image_topic} with timestamp {ins_timestamp}")
+                    writer.write(self.image_topic, new_image, ins_timestamp_int)
 
-        mean = np.mean(np.array(self.deltas))
-        std = np.std(np.array(self.deltas))
-        print(f'time correction mean: {mean} sec, std: {std} sec')
+                    # save images as *.png's
+                    image = self.br.imgmsg_to_cv2(closest_image, desired_encoding='passthrough')
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    cv2.imwrite(f'frame_{ins_timestamp.sec}.{str(ins_timestamp.nanosec).rjust(9, "0")}.png', image)
+
+                    # waste management
+                    closest_image = None
+
+        deltas = np.array(self.deltas)
+        mean = np.mean(deltas)
+        std = np.std(deltas)
+        plt.hist(deltas, bins=50)
+        plt.savefig("hist.png")
+        print(f'time correction mean: {mean} sec, std: {std} sec, {deltas.shape} samples')
         writer.close()
 
     def find_closest_image(self, target_timestamp, image_msgs):
@@ -87,7 +108,7 @@ class BagProcessor:
             new_time = target_timestamp.sec + target_timestamp.nanosec * 1e-9
             diff = abs(old_time - new_time)
             if diff < min_diff:
-                print('found closer image timestamp')
+                # print('found closer image timestamp')
                 closest_image = image
                 min_diff = diff
         return closest_image
