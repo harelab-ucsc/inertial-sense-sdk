@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message, serialize_message
-
+from scipy.spatial.transform import Rotation as R
 import matplotlib.pyplot as plt
 from cv_bridge import CvBridge
 import cv2
@@ -89,7 +89,7 @@ class BagProcessor:
                 ins_timestamp = ins_msg.header.stamp
                 ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
                 closest_image = self.find_closest_image(ins_timestamp, image_msgs)
-                ins_timestamp_int = int(ins_timestamp.sec * 1e9 + ins_timestamp.nanosec)
+
                 if closest_image:
                     # Compute the time difference
                     old_time = closest_image.header.stamp.sec + closest_image.header.stamp.nanosec * 1e-9
@@ -107,9 +107,11 @@ class BagProcessor:
 
                     new_image = serialize_message(updated_image)
                     writer.write(self.image_topic, new_image, ins_timestamp_int)
-
-        mean = np.mean(np.array(self.deltas))
-        std = np.std(np.array(self.deltas))
+        deltas = np.array(self.deltas)
+        mean = deltas.mean()
+        std = deltas.std()
+        plt.hist(deltas, bins=50)
+        plt.savefig('hist.png')
         print(f'time correction mean: {mean} sec, std: {std} sec')
 
         # Save JSON file
@@ -153,16 +155,28 @@ class BagProcessor:
 
     def append_pose_to_json(self, ins_msg, image_msg, timestamp_str):
         """Append the pose data from INS message to the JSON."""
+        # Convert quaternion to R matrix
+        quat = ins_msg.qn2b
+        rot = R.from_quat(quat)
+        rot = rot.as_matrix()
+
         # Convert LLA to UTM
         utm_x, utm_y = self.transformer.transform(ins_msg.lla[1], ins_msg.lla[0])  # (longitude, latitude)
         altitude = ins_msg.lla[2]
 
-        transform_matrix = [
-            [1, 0, 0, utm_x],
-            [0, 1, 0, utm_y],
-            [0, 0, 1, altitude],
-            [0, 0, 0, 1]
-        ]
+        # make T vector
+        trans = [utm_x, utm_y, altitude]
+
+        # compose world pose of IMX-5
+        transform_matrix = np.eye(4)
+        transform_matrix[:3,:3] = rot
+        transform_matrix[:3,3] = trans
+
+        # compose world pose of BFLY
+        # print(len(self.intrinsics["T_cam_imu"]), len(self.intrinsics["T_cam_imu"][0]))
+        transform_matrix = transform_matrix@np.array(self.intrinsics["T_cam_imu"])
+
+        transform_matrix = transform_matrix.tolist()
 
         pose = {
             "w": image_msg.width,
