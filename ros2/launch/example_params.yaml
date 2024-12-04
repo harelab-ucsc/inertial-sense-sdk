@@ -28,13 +28,13 @@
 
 
 #topic: "inertialsense"
-port: [/dev/ttyAMA0, /dev/ttyACM0, /dev/ttyACM1, /dev/ttyACM2, /dev/ttyACM3]
+port: [/dev/ttyAMA0, /dev/ttyACM0]
 # port: /dev/ttyACM0
 baudrate: 921600
 enable_log: false
 publishTf: true                                 # Publish Transform Frame (TR)
 frame_id: "IS-IMX-5"                                    # FIXME: What is this?  is it just the FrameID to use in the ROS messages?
-mag_declination: 0.0
+mag_declination: 0.22235495
 ref_lla: [0.0, 0.0, 0.0]
 # factory_reset: true                             # Reset flash config to factory defaults on startup.
 
@@ -127,7 +127,7 @@ sensors:
 gps1:
   enable: true
   type: 'F9P'
-  antenna_offset: [-0.06, 0, -0.345]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
+  antenna_offset: [-0.06, 0.0, -0.345]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
   gpsTimeUserDelay: 0.0
   messages:
     pos_vel:
@@ -136,7 +136,7 @@ gps1:
       period: 1
     navsatfix:
       topic: "/NavSatFix"                        # /navsatfix
-      enable: false
+      enable: true
     info:
       topic: "gps1/info"                        # inertialsense/gps1/info
       enable: false

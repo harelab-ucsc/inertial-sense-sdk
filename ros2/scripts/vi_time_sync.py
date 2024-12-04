@@ -120,6 +120,53 @@ class BagProcessor:
         # Close the bag writer
         writer.close()
 
+    def rotate_pose_180_y(self, pose):
+        """
+        Rotate a pose by 180 degrees around its Y-axis.
+        :param pose: A 4x4 transformation matrix (numpy array).
+        :return: Rotated pose (4x4 numpy array).
+        """
+        # Define 180-degree rotation around the Y-axis
+        rot_180_y = R.from_euler('y', 180, degrees=True).as_matrix()
+    
+        # Extract the original rotation and translation
+        original_rotation = pose[:3, :3]
+        original_translation = pose[:3, 3]
+
+        # Apply the 180-degree rotation
+        new_rotation = rot_180_y @ original_rotation
+
+        # Construct the new pose
+        new_pose = np.eye(4)
+        new_pose[:3, :3] = new_rotation
+        new_pose[:3, 3] = original_translation
+
+        return new_pose
+
+    def rotate_pose_90_z(self, pose):
+        """
+        Rotate a pose by 90 degrees around its z-axis.
+        :param pose: A 4x4 transformation matrix (numpy array).
+        :return: Rotated pose (4x4 numpy array).
+        """
+        # Define 90-degree rotation around the Z-axis
+        rot_90_z = R.from_euler('z', -90, degrees=True).as_matrix()
+    
+        # Extract the original rotation and translation
+        original_rotation = pose[:3, :3]
+        original_translation = pose[:3, 3]
+
+        # Apply the 180-degree rotation
+        new_rotation = rot_90_z @ original_rotation
+
+        # Construct the new pose
+        new_pose = np.eye(4)
+        new_pose[:3, :3] = new_rotation
+        new_pose[:3, 3] = original_translation
+
+        return new_pose
+
+
     def find_closest_image(self, target_timestamp, image_msgs):
         """Find the closest image message to the given timestamp."""
         closest_image = None
@@ -157,7 +204,8 @@ class BagProcessor:
         """Append the pose data from INS message to the JSON."""
         # Convert quaternion to R matrix
         quat = ins_msg.qn2b
-        rot = R.from_quat(quat)
+        reordered_quat = [quat[1], quat[2], quat[3], quat[0]]
+        rot = R.from_quat(reordered_quat)
         rot = rot.as_matrix()
 
         # Convert LLA to UTM
@@ -175,7 +223,8 @@ class BagProcessor:
         # compose world pose of BFLY
         # print(len(self.intrinsics["T_cam_imu"]), len(self.intrinsics["T_cam_imu"][0]))
         transform_matrix = transform_matrix@np.array(self.intrinsics["T_cam_imu"])
-
+        transform_matrix = self.rotate_pose_180_y(transform_matrix)
+        transform_matrix = self.rotate_pose_90_z(transform_matrix)
         transform_matrix = transform_matrix.tolist()
 
         pose = {
@@ -186,7 +235,7 @@ class BagProcessor:
             "cx": self.intrinsics["cx"],
             "cy": self.intrinsics["cy"],
             "timestamp": ins_msg.header.stamp.sec + ins_msg.header.stamp.nanosec * 1e-9,
-            "file_path": f"images/{timestamp_str}.png",
+            "file_path": f"{timestamp_str}.png",
             "transform_matrix": transform_matrix
         }
         self.frames.append(pose)
