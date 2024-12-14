@@ -21,15 +21,28 @@ from pyproj import Proj, Transformer
 #from rectify import rectify_image
 
 class BagProcessor:
-    def __init__(self, input_bag_path, output_bag_path, image_topic, ins_topic, intrinsics_path):
+    def __init__(self, input_bag_path, output_bag_path, ds_dir, image_topic, ins_topic, intrinsics_path, rectify, sync):
         self.input_bag_path = input_bag_path
         self.output_bag_path = output_bag_path
         self.image_topic = image_topic
         self.ins_topic = ins_topic
+        self.ds_dir = ds_dir
+
         self.deltas = []
         self.br = CvBridge()
         self.frames = []
+
         self.intrinsics = self.load_intrinsics(intrinsics_path)
+        self.K = np.array([[self.intrinsics["fx"], 0, self.intrinsics["cx"]],
+                      [0, self.intrinsics["fy"], self.intrinsics["cy"]],
+                      [0, 0, 1]])
+        self.D = np.array([self.intrinsics["k1"], self.intrinsics["k2"], self.intrinsics["r1"], self.intrinsics["r2"]])
+        self.width = self.intrinsics["resx"]
+        self.height = self.intrinsics["resy"]
+        self.map1, self.map2 = cv2.initUndistortRectifyMap(self.K, self.D, None, self.K, (self.width, self.height), cv2.CV_32FC1)
+
+        self.rectify = rectify
+        self.sync = sync
 
         # Initialize UTM transformer
         self.transformer = Transformer.from_crs("EPSG:4326", "EPSG:32610", always_xy=True)  # Replace EPSG:32633 with appropriate UTM zone
@@ -98,7 +111,12 @@ class BagProcessor:
                     self.deltas.append(delta)
 
                     # Update image timestamp and save the image
-                    updated_image = self.update_image_timestamp(closest_image, ins_timestamp)
+                    if self.sync:
+                        updated_image = self.update_image_timestamp(closest_image, ins_timestamp)
+                    else:
+                        updated_image = closest_image
+                    if self.rectify:
+                        updated_image = self.rectify_image(updated_image)
                     timestamp_str = f"{ins_timestamp.sec}.{ins_timestamp.nanosec:09d}"
                     self.save_image(updated_image, timestamp_str)
 
@@ -110,8 +128,8 @@ class BagProcessor:
         deltas = np.array(self.deltas)
         mean = deltas.mean()
         std = deltas.std()
-        plt.hist(deltas, bins=50)
-        plt.savefig('hist.png')
+        plt.hist(deltas, bins=150)
+        plt.savefig(os.path.join(self.ds_dir,'hist.png'))
         print(f'time correction mean: {mean} sec, std: {std} sec')
 
         # Save JSON file
@@ -179,7 +197,7 @@ class BagProcessor:
                 # print('found closer image timestamp')
                 closest_image = image
                 min_diff = diff
-        print(f'    found image matching timestamp: {target_timestamp}')
+#        print(f'    found image matching timestamp: {target_timestamp}')
         return closest_image
 
     def update_image_timestamp(self, image_msg, new_timestamp):
@@ -198,7 +216,14 @@ class BagProcessor:
     def save_image(self, image_msg, timestamp_str):
         """Save the image message as a PNG file."""
         img_data = np.frombuffer(image_msg.data, dtype=np.uint8).reshape(image_msg.height, image_msg.width, -1)
-        cv2.imwrite(f"images/{timestamp_str}.png", img_data)
+        savename = os.path.join(self.ds_dir, 'images')
+        if not os.path.isdir(savename):
+            print(f'  Making Save Directory: {savename}')
+            os.makedirs(savename, exist_ok=True)
+
+        savename = os.path.join(savename, f"{timestamp_str}.png")
+        print(f"  Saving Image To: {savename}")
+        cv2.imwrite(savename, img_data)
 
     def append_pose_to_json(self, ins_msg, image_msg, timestamp_str):
         """Append the pose data from INS message to the JSON."""
@@ -242,27 +267,17 @@ class BagProcessor:
 
     def save_json(self):
         """Save all frames to a JSON file."""
-        with open("poses.json", "w") as json_file:
+        savename = os.path.join(self.ds_dir, "poses.json")
+        with open(savename, "w") as json_file:
+            print(f'  Saving JSON To: {savename}')
             json.dump({"frames": self.frames}, json_file, indent=4)
 
-    def rectify_image(self, raw_image, intrinsics, distortion_coeffs, resolution):
-        # Convert lists to numpy arrays
-        K = np.array([[intrinsics[0], 0, intrinsics[2]],
-                      [0, intrinsics[1], intrinsics[3]],
-                      [0, 0, 1]])
-        D = np.array(distortion_coeffs)
-
-        # Get image resolution
-        width, height = resolution
-
-        # Create rectification and projection maps
-        map1, map2 = cv2.initUndistortRectifyMap(K, D, None, K, (width, height), cv2.CV_32FC1)
-
+    def rectify_image(self, raw_image):
         # Convert raw image message to OpenCV image using rgb8 encoding
         cv_image = self.br.imgmsg_to_cv2(raw_image, desired_encoding='mono8')
 
         # Rectify the image using the maps
-        rectified_image = cv2.remap(cv_image, map1, map2, interpolation=cv2.INTER_LINEAR)
+        rectified_image = cv2.remap(cv_image, self.map1, self.map2, interpolation=cv2.INTER_LINEAR)
 
         # Convert the rectified image back to ROS Image message using rgb8 encoding
         rectified_img_msg = self.br.cv2_to_imgmsg(rectified_image, encoding='mono8')
@@ -274,15 +289,18 @@ def main():
     parser = argparse.ArgumentParser(description="Fix image timestamps in a ROS2 bag file using INS messages.")
     parser.add_argument("input_bag", help="Path to the input ROS2 bag file")
     parser.add_argument("output_bag", help="Path to the output ROS2 bag file")
+    parser.add_argument("ds_dir",  help="Path to the directory to save images/ and poses.json to")
     parser.add_argument("image_topic", help="Image topic name (e.g., /camera/image_raw)")
     parser.add_argument("ins_topic", help="INS topic name (e.g., /ins/data)")
     parser.add_argument("intrinsics", help="Path to the YAML file with camera intrinsics")
+    parser.add_argument("-r", "--rectify", action="store_false", help="Whether or not to rectify in vi_time_sync.py (default: True)")
+    parser.add_argument("-s", "--sync", action="store_false", help="Whether or not to perform time synchronization (default: True)")
 
     args = parser.parse_args()
 
     rclpy.init()
 
-    processor = BagProcessor(args.input_bag, args.output_bag, args.image_topic, args.ins_topic, args.intrinsics)
+    processor = BagProcessor(args.input_bag, args.output_bag, args.ds_dir, args.image_topic, args.ins_topic, args.intrinsics, args.rectify, args.sync)
     processor.process_bag()
 
     rclpy.shutdown()
