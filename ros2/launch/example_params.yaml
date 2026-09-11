@@ -28,12 +28,11 @@
 
 
 #topic: "inertialsense"
-port: [/dev/ttyAMA0, /dev/ttyACM0]
-# port: /dev/ttyACM0
+port: /dev/ttyAMA0
 baudrate: 921600
 enable_log: false
 publishTf: true                                 # Publish Transform Frame (TR)
-frame_id: "IS-IMX-5"                                    # FIXME: What is this?  is it just the FrameID to use in the ROS messages?
+frame_id: "map"                                    # FIXME: What is this?  is it just the FrameID to use in the ROS messages?
 mag_declination: 0.22235495
 ref_lla: [0.0, 0.0, 0.0]
 # factory_reset: true                             # Reset flash config to factory defaults on startup.
@@ -102,7 +101,7 @@ sensors:
   messages:
     imu:              # Publish IMU angular rates and linear acceleration
       topic: "imu"
-      enable: true
+      enable: false
       period: 1
     imu_raw:
       topic: "imu_raw"
@@ -127,7 +126,7 @@ sensors:
 gps1:
   enable: true
   type: 'F9P'
-  antenna_offset: [-0.06, 0.0, -0.345]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
+  antenna_offset: [0.0, -0.1, -0.34]                     # X,Y,Z offset in meters in Sensor Frame to GPS 1 antenna
   gpsTimeUserDelay: 0.0
   messages:
     pos_vel:
@@ -135,7 +134,7 @@ gps1:
       enable: false
       period: 1
     navsatfix:
-      topic: "/NavSatFix"                        # /navsatfix
+      topic: "gps1/NavSatFix"                        # /navsatfix
       enable: true
     info:
       topic: "gps1/info"                        # inertialsense/gps1/info
@@ -253,7 +252,7 @@ rtk_rover:
     serial_example:
       type: serial                              # host/pc serial port, always 8N1 - IS-Ros will open and forward data from the EVB to this port
       format: RTCM3
-      port: /dev/ttyUSB0                        # Serial port of local host where corrections can be read from (not the EVB/IMX port!)
+      port: /dev/devRFD900x                        # Serial port of local host where corrections can be read from (not the EVB/IMX port!)
       baud_rate: 57600                         # Serial baud rate
 
     ros_provider:

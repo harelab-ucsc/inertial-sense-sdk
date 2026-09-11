@@ -1191,7 +1191,14 @@ void InertialSenseROS::INS2_callback(eDataIDs DID, const ins_2_t *const msg)
     if (rs_.did_ins2.enabled)
     {
         // Standard DID_INS_2 message
-	msg_did_ins2.header.stamp = nh_->now();
+        // HARE 2026-09-11: stamp DID_INS_2 with the INS solution's own GPS
+        // epoch (week, timeOfWeek) instead of the ROS arrival time. nh_->now()
+        // made /ins_quat_uvw_lla stamps Pi-clock arrival times, which are not
+        // GPS-referenced (measured offset -2,359 s to -166,615 s per bag) and
+        // conflated transport latency with INS solution age. Falls back to the
+        // legacy local-offset estimate automatically while GPS_towOffset_ is 0
+        // (no GPS fix yet).
+        msg_did_ins2.header.stamp = ros_time_from_week_and_tow(msg->week, msg->timeOfWeek);
         msg_did_ins2.header.frame_id = frame_id_;
         msg_did_ins2.week = msg->week;
         msg_did_ins2.time_of_week = msg->timeOfWeek;
