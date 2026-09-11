@@ -58,6 +58,7 @@
 #include "inertial_sense_ros2/msg/gnss_obs_vec.hpp"
 #include "inertial_sense_ros2/msg/inl2_states.hpp"
 #include "inertial_sense_ros2/msg/didins2.hpp"
+#include "inertial_sense_ros2/msg/sys_params.hpp"
 #include "inertial_sense_ros2/msg/didins1.hpp"
 #include "inertial_sense_ros2/msg/didins4.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -217,6 +218,10 @@ public:
     void GPS_geph_callback(eDataIDs DID, const geph_t *const msg);
     void RTK_Misc_callback(eDataIDs DID, const gps_rtk_misc_t *const msg);
     void RTK_Rel_callback(eDataIDs DID, const gps_rtk_rel_t *const msg);
+    void sys_params_callback(eDataIDs DID, const sys_params_t *const msg);
+    void dev_info_callback(eDataIDs DID, const dev_info_t *const msg);
+    void publish_did_key_values(uint32_t did, const uint8_t *data, const std::string &name,
+                                rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub);
 
 
     rclcpp::Node::SharedPtr nh_;
@@ -244,6 +249,9 @@ public:
         TopicHelper magnetometer;
         TopicHelper barometer;
         TopicHelper strobe_in;
+        TopicHelper sys_params;
+        TopicHelper dev_info;
+        TopicHelper flash_config;
 
         TopicHelperGps gps1;
         TopicHelperGps gps2;
@@ -406,6 +414,7 @@ public:
     // HARE Lab addition: imu_raw
     sensor_msgs::msg::Imu msg_imu_raw;
     inertial_sense_ros2::msg::PIMU msg_pimu;
+    inertial_sense_ros2::msg::SysParams msg_sys_params;
     inertial_sense_ros2::msg::GPS msg_gps1;
     inertial_sense_ros2::msg::GPS msg_gps2;
     sensor_msgs::msg::NavSatFix msg_NavSatFix;

@@ -1,0 +1,15 @@
+std_msgs/Header header
+uint32 time_of_week_ms
+uint32 ins_status
+uint32 hdw_status
+float32 imu_temp
+float32 baro_temp
+float32 mcu_temp
+uint32 sys_status
+uint32 imu_sample_period_ms
+uint32 nav_output_period_ms
+float64 sensor_true_period
+uint32 flash_cfg_checksum
+uint32 nav_update_period_ms
+uint32 gen_fault_code
+float64 up_time

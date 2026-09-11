@@ -31,6 +31,7 @@
 #include <inertial_sense_ros2/msg/gps.hpp>
 #include <inertial_sense_ros2/msg/inl2_states.hpp>
 #include <inertial_sense_ros2/msg/pimu.hpp>
+#include <inertial_sense_ros2/msg/sys_params.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/detail/fluid_pressure__traits.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -84,6 +85,7 @@ public:
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr pub_nsf;
     rclcpp::Publisher<inertial_sense_ros2::msg::GPSInfo>::SharedPtr pub_gpsinfo1;
     rclcpp::Publisher<inertial_sense_ros2::msg::GPSInfo>::SharedPtr pub_gpsinfo2;
+    rclcpp::Publisher<inertial_sense_ros2::msg::SysParams>::SharedPtr pub_sys_params;
 
 };
 

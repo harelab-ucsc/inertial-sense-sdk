@@ -43,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/DIDINS2.msg"
         "msg/DIDINS1.msg"
         "msg/DIDINS4.msg"
+        "msg/SysParams.msg"
         "srv/FirmwareUpdate.srv"
         "srv/RefLLAUpdate.srv"
         DEPENDENCIES std_msgs geometry_msgs diagnostic_msgs sensor_msgs builtin_interfaces 
@@ -115,6 +116,9 @@ target_link_libraries(new_target ${RESOLVED_ROS_DIR}/../libInertialSenseSDK.a ${
 #link_directories(/home/s/Inertial_Sense/imx/ros2_ws/src/inertial-sense-sdk)
 install(TARGETS new_target #test_new_target
         DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch/
+        DESTINATION share/${PROJECT_NAME}/launch)
 
 install(
   PROGRAMS scripts/vi_time_sync.py

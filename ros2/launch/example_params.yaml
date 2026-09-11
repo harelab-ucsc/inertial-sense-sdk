@@ -109,7 +109,7 @@ sensors:
       period: 5
     pimu:             # Publish preintegrated IMU delta theta and delta velocity
       topic: "pimu"
-      enable: false
+      enable: true
       period: 1
     magnetometer:
       topic: "mag"
@@ -122,6 +122,16 @@ sensors:
     strobe_in:      # Publish the strobe input time
       topic: "strobe_in"
       enable: true
+    sys_params:       # DID_SYS_PARAMS: insStatus, hdwStatus, genFaultCode, imu/baro/mcu temps
+      topic: "sys_params"
+      enable: true
+      period: 144     # nav-rate source; 144 -> ~1 Hz. Verify with `ros2 topic hz /sys_params`
+    dev_info:         # DID_DEV_INFO, one latched message per boot
+      topic: "dev_info"
+      enable: true
+    flash_config:     # DID_FLASH_CONFIG, one latched message per boot
+      topic: "flash_config"
+      enable: true
 
 gps1:
   enable: true
@@ -131,38 +141,23 @@ gps1:
   messages:
     pos_vel:
       topic: "gps1/pos_vel"
-      enable: false
+      enable: true
       period: 1
     navsatfix:
       topic: "gps1/NavSatFix"                        # /navsatfix
       enable: true
     info:
       topic: "gps1/info"                        # inertialsense/gps1/info
-      enable: false
+      enable: true
       period: 5                                 # Publish every 1 second (200ms x 5)
     raw:
       topic: "gps1/raw"                         # Observation "/obs", ephemeris "/eph", and GLONASS ephemeris "/gep" are appended to the end of the topic name.  (i.e. topic="gps1_raw" results is "gps1_raw_obs" published as actual topic)
       enable: false
       period: 5                                 # Publish every 1 second (200ms x 5)
     rtk_pos_rel:
-      topic: "gps1/pos_vel"
-      enable: false
+      topic: "rtk_pos"
+      enable: true
       period: 1
-    rel:
-      enable: false
-      topic: "rel"
-    base:
-      topic: "base"
-      rel:
-        topic: "rel"
-      info:
-        topic: "info"
-    compass:
-      topic: "compass"
-      rel:
-        topic: "rel"
-      info:
-        topic: "info"
 
 gps2:
   enabled: false
@@ -172,7 +167,7 @@ gps2:
   messages:
     pos_vel:
       topic: "gps2/pos_vel"
-      enable: false
+      enable: true
       period: 1
     navsatfix:
       topic: "/NavSatFix"                        # /navsatfix
@@ -185,25 +180,10 @@ gps2:
       topic: "gps2/raw"                         # Observation "/obs", ephemeris "/eph", and GLONASS ephemeris "/gep" are appended to the end of the topic name.  (i.e. topic="gps1_raw" results is "gps1_raw_obs" published as actual topic)
       enable: false
       period: 5                                 # Publish every 1 second (200ms x 5)
-    rtk_pos_rel:
-      topic: "gps2/rtk_rel_pos"
-      enable: false
+    rtk_cmp_rel:
+      topic: "rtk_cmp"
+      enable: true
       period: 1
-    rel:
-      enable: false
-      topic: "rel"
-    base:
-      topic: "base"
-      rel:
-        topic: "rel"
-      info:
-        topic: "info"
-    compass:
-      topic: "compass"
-      rel:
-        topic: "rel"
-      info:
-        topic: "info"
 
 evb:
   # http://docs.inertialsense.com/user-manual/hardware/EVB2/#configurations
