@@ -1897,13 +1897,20 @@ void InertialSenseROS::GPS_info_callback(eDataIDs DID, const gps_sat_t *const ms
     msg_gps1_info.header.stamp = ros_time_from_tow(msg->timeOfWeekMs / 1.0e3);
     msg_gps1_info.header.frame_id = frame_id_;
     msg_gps1_info.num_sats = msg->numSats;
-    for (int i = 0; i < 50; i++) {
-        msg_gps1_info.sattelite_info[i].sat_id = msg->sat[i].svId;
-        msg_gps1_info.sattelite_info[i].cno = msg->sat[i].cno;
-        msg_gps1_info.sattelite_info[i].gnss_id = msg->sat[i].gnssId;
-        msg_gps1_info.sattelite_info[i].elev = msg->sat[i].elev;
-        msg_gps1_info.sattelite_info[i].azim = msg->sat[i].azim;
-        msg_gps1_info.sattelite_info[i].status = msg->sat[i].status;
+    // Only the first numSats entries are actually transmitted; the remainder of the
+    // receive buffer is stale/garbage, so publish zeros there instead of noise.
+    const uint32_t nSats = msg->numSats < MAX_NUM_SATELLITES ? msg->numSats : MAX_NUM_SATELLITES;
+    for (uint32_t i = 0; i < MAX_NUM_SATELLITES; i++) {
+        if (i < nSats) {
+            msg_gps1_info.sattelite_info[i].sat_id = msg->sat[i].svId;
+            msg_gps1_info.sattelite_info[i].cno = msg->sat[i].cno;
+            msg_gps1_info.sattelite_info[i].gnss_id = msg->sat[i].gnssId;
+            msg_gps1_info.sattelite_info[i].elev = msg->sat[i].elev;
+            msg_gps1_info.sattelite_info[i].azim = msg->sat[i].azim;
+            msg_gps1_info.sattelite_info[i].status = msg->sat[i].status;
+        } else {
+            msg_gps1_info.sattelite_info[i] = inertial_sense_ros2::msg::SatInfo();
+        }
     }
 
     switch (DID)

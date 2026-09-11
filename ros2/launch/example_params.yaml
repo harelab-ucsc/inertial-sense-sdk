@@ -125,7 +125,7 @@ sensors:
     sys_params:       # DID_SYS_PARAMS: insStatus, hdwStatus, genFaultCode, imu/baro/mcu temps
       topic: "sys_params"
       enable: true
-      period: 144     # nav-rate source; 144 -> ~1 Hz. Verify with `ros2 topic hz /sys_params`
+      period: 1000    # 1 kHz source (measured 6.95 Hz at period 144) -> ~1 Hz
     dev_info:         # DID_DEV_INFO, one latched message per boot
       topic: "dev_info"
       enable: true
